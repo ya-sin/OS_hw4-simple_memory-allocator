@@ -270,43 +270,34 @@ static void en_bin(const int index, chunk_header *c_h)
     } else {
         chunk_header *tmp;
         chunk_header *cur;
-        switch (index) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-            tmp = bin[index]->prev;
-            bin[index]->prev = c_h;
-            c_h->next = bin[index];
-            tmp->next = c_h;
-            c_h->prev = tmp;
-            break;
-        case 6:
-            if (bin[6]->size > 0 &&
-                    c_h->size_and_flag.cur_chunk_size > ((chunk_header *)bin[6]->next)->size_and_flag.cur_chunk_size) {
-                tmp = bin[index]->next;
-                bin[index]->next = c_h;
-                c_h->prev = bin[index];
-                tmp->prev = c_h;
-                c_h->next = tmp;
-            } else {
-                cur = bin[6]->prev;
-                while ((void *)cur != (void *)bin[6]) {
-                    if (c_h->size_and_flag.cur_chunk_size <= cur->size_and_flag.cur_chunk_size) {
-                        tmp = cur->next;
-                        cur->next = c_h;
-                        c_h->prev = cur;
-                        tmp->prev = c_h;
-                        c_h->next = tmp;
-                        break;
-                    }
-                    cur = cur->prev;
-                }
-            }
-            break;
-        }
+
+        tmp = bin[index]->prev;
+        bin[index]->prev = c_h;
+        c_h->next = bin[index];
+        tmp->next = c_h;
+        c_h->prev = tmp;
+        // if (bin[6]->size > 0 &&
+        //         c_h->size_and_flag.cur_chunk_size > ((chunk_header *)bin[6]->next)->size_and_flag.cur_chunk_size) {
+        //     tmp = bin[index]->next;
+        //     bin[index]->next = c_h;
+        //     c_h->prev = bin[index];
+        //     tmp->prev = c_h;
+        //     c_h->next = tmp;
+        // } else {
+        //     cur = bin[6]->prev;
+        //     while ((void *)cur != (void *)bin[6]) {
+        //         if (c_h->size_and_flag.cur_chunk_size <= cur->size_and_flag.cur_chunk_size) {
+        //             tmp = cur->next;
+        //             cur->next = c_h;
+        //             c_h->prev = cur;
+        //             tmp->prev = c_h;
+        //             c_h->next = tmp;
+        //             break;
+        //         }
+        //         cur = cur->prev;
+        //     }
+        // }
+        // break;
     }
     bin[index]->size++;
 }

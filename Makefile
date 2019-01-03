@@ -1,7 +1,7 @@
 EXEC = hw4_mm_test
 TARGETS = $(EXEC)
-CC ?= gcc
-CFLAGS += -std=gnu99 -I./lib -Wall -pthread
+CC := gcc
+override CFLAGS += -O3 -Wall
 OBJS = hw4_mm_test.o ./lib/hw_malloc.o
 SUBDIR = ./lib
 GIT_HOOKS := .git/hooks/applied
@@ -21,6 +21,7 @@ hw4_mm_test.o: %.o: %.c
 ./lib/hw_malloc.o:
 	$(MAKE) -C $(SUBDIR)
 
+.PHONY: clean
 clean:
 	rm -rf *.o $(EXEC)
 	$(MAKE) -C $(SUBDIR) clean
