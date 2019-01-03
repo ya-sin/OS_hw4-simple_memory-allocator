@@ -8,7 +8,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <math.h>
+#include <sys/mman.h>
 // #define DEBUG
 #ifdef DEBUG
 #define PRINTERR(s)\
@@ -45,5 +46,19 @@ extern int hw_free(void *mem);
 extern void *get_start_brk(void);
 extern void show_bin(const int i);
 extern void watch_heap();
+
+/*Static function*/
+void show_mmap(void);
+void reorder(void);
+void add2list(struct chunk_header* c_h,size_t need);
+static chunk_header *create_chunk(chunk_header *base, const size_t need);
+static chunk_header *split(chunk_header **ori, const size_t need);
+static chunk_header *merge(chunk_header *h);
+static int search_debin(const size_t need);
+static int search_enbin(const size_t need);
+static void en_bin(const int index, chunk_header *c_h);
+static chunk_header *de_bin(const int index, const size_t need);
+static void rm_chunk_from_bin(chunk_header *c);
+static int check_valid_free(const void *mem);
 
 #endif

@@ -13,18 +13,9 @@ bin_t s_mhead = {};
 bin_t *mhead;
 int slice_num = 1; // count the number of chunk
 chunk_header *top[2];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+// pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-/*Static function*/
-static chunk_header *create_chunk(chunk_header *base, const size_t need);
-static chunk_header *split(chunk_header **ori, const size_t need);
-static chunk_header *merge(chunk_header *h);
-static int search_debin(const size_t need);
-static int search_enbin(const size_t need);
-static void en_bin(const int index, chunk_header *c_h);
-static chunk_header *de_bin(const int index, const size_t need);
-static void rm_chunk_from_bin(chunk_header *c);
-static int check_valid_free(const void *mem);
+
 
 void reorder(void)
 {
@@ -120,7 +111,7 @@ void *hw_malloc(size_t bytes)
         // bytes+header_size
         //mmap_alloc_list()
     } else {
-        pthread_mutex_lock(&mutex);
+        // pthread_mutex_lock(&mutex);
         int bin_num=0;
         size_t tmp = bytes+24;
         while(tmp!=1) {
@@ -133,9 +124,9 @@ void *hw_malloc(size_t bytes)
         if (!has_init) {
             has_init = true;
             if (need > 64 * 1024) {
-                PRINTERR("not enough space\n");
+                // PRINTERR("not enough space\n");
                 has_init = false;
-                pthread_mutex_unlock(&mutex);
+                // pthread_mutex_unlock(&mutex);
                 return NULL;
             }
             for (int i = 0; i < 11; i++) {
@@ -165,7 +156,7 @@ void *hw_malloc(size_t bytes)
             chunk_header *c = split(&s, need);
             chunk_header test;
             // printf("!!!!chunk size%d %d %d %d\n",sizeof(test.prev),sizeof(test.next),sizeof(test.size_and_flag),sizeof(test));
-            pthread_mutex_unlock(&mutex);
+            // pthread_mutex_unlock(&mutex);
             return (void *)((intptr_t)(void*)c +
                             sizeof(chunk_header) -
                             (intptr_t)(void*)get_start_brk());
@@ -179,25 +170,25 @@ void *hw_malloc(size_t bytes)
                 // printf("need%lld\n",need);
                 r = de_bin(bin_num, need);
                 // printf("qqqq%d\n",r->size_and_flag.cur_chunk_size);
-                pthread_mutex_unlock(&mutex);
+                // pthread_mutex_unlock(&mutex);
                 return (void *)((intptr_t)(void*)r +
                                 sizeof(chunk_header) -
                                 (intptr_t)(void*)get_start_brk());
             }
         }
-        pthread_mutex_unlock(&mutex);
+        // pthread_mutex_unlock(&mutex);
         return NULL;
     }
 }
 
 int hw_free(void *mem)
 {
-    pthread_mutex_lock(&mutex);
+    // pthread_mutex_lock(&mutex);
     void *a_mem = (void *)((intptr_t)(void*)mem +
                            (intptr_t)(void*)get_start_brk());
     // printf("a_mem %d %d %d\n",a_mem,get_start_brk(),mem);
     if (!has_init || !check_valid_free(a_mem)) {
-        pthread_mutex_unlock(&mutex);
+        // pthread_mutex_unlock(&mutex);
         return 0;
     } else {
         chunk_header *h = (chunk_header *)((intptr_t)(void*)a_mem -
@@ -207,7 +198,7 @@ int hw_free(void *mem)
         nxt->size_and_flag.alloc_flag = 1;
         chunk_header *m = merge(h);
         en_bin(search_enbin(m->size_and_flag.cur_chunk_size), m);
-        pthread_mutex_unlock(&mutex);
+        // pthread_mutex_unlock(&mutex);
         return 1;
     }
 }
@@ -377,28 +368,6 @@ static void en_bin(const int index, chunk_header *c_h)
         c_h->next = bin[index];
         tmp->next = c_h;
         c_h->prev = tmp;
-        // if (bin[6]->size > 0 &&
-        //         c_h->size_and_flag.cur_chunk_size > ((chunk_header *)bin[6]->next)->size_and_flag.cur_chunk_size) {
-        //     tmp = bin[index]->next;
-        //     bin[index]->next = c_h;
-        //     c_h->prev = bin[index];
-        //     tmp->prev = c_h;
-        //     c_h->next = tmp;
-        // } else {
-        //     cur = bin[6]->prev;
-        //     while ((void *)cur != (void *)bin[6]) {
-        //         if (c_h->size_and_flag.cur_chunk_size <= cur->size_and_flag.cur_chunk_size) {
-        //             tmp = cur->next;
-        //             cur->next = c_h;
-        //             c_h->prev = cur;
-        //             tmp->prev = c_h;
-        //             c_h->next = tmp;
-        //             break;
-        //         }
-        //         cur = cur->prev;
-        //     }
-        // }
-        // break;
     }
     bin[index]->size++;
 }
@@ -463,24 +432,6 @@ static void rm_chunk_from_bin(chunk_header *c)
     }
     c->prev = NULL;
     c->next = NULL;
-}
-
-void watch_heap()
-{
-    chunk_header *cur = get_start_brk();
-    int count = 0;
-    printf("slice: %d\n", slice_num);
-    while (count++ < slice_num + 1) {
-        printf("----------\n");
-        printf("0x%08" PRIxPTR "(",
-               (uintptr_t)(void *)((intptr_t)(void*)cur - (intptr_t)(void*)get_start_brk()));
-        printf("0x%08" PRIxPTR ")\n",
-               (uintptr_t)(void *)cur);
-        printf("chun_size:%lld\n", cur->size_and_flag.cur_chunk_size);
-        printf("prev_size:%lld\n", cur->size_and_flag.prev_chunk_size);
-        printf("prev_free:%lld\n", cur->size_and_flag.alloc_flag);
-        cur = (void *)((intptr_t)(void*)cur + (intptr_t)(void*)cur->size_and_flag.cur_chunk_size);
-    }
 }
 
 static int check_valid_free(const void *a_mem)
