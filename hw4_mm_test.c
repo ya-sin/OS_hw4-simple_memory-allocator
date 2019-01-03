@@ -28,20 +28,26 @@ int main()
             //     printf("fail");
         } else if(!strcmp(input,"print")) {
             int bin_num;
+            char q[20];
             // int i = input[10] - '0';
-            scanf(" bin[%d]",&bin_num);
+            scanf("%s",q);
+            bin_num = q[4]-'0';
+            if(q[5]-'0'==0)
+                bin_num = 10;
+            // printf("%d\n",bin_num);
+            // scanf(" bin[%d]",&bin_num);
             // printf("%d\n",bin_num);
             // printf("alloc %d\n",i);
-            if (bin_num < 0 || bin_num > 10) {
-                printf("COMMAND ERROR\n");
-                continue;
-            }
-            show_bin(bin_num);
-        } else if(!strcmp(input,"p")) {
-            char m[20];
-            scanf("%s",m);
-            if(!strcmp(m,"mmap"))
+
+            if(bin_num==47)
                 show_mmap();
+            else {
+                if (bin_num < 0 || bin_num > 10) {
+                    printf("COMMAND ERROR\n");
+                    continue;
+                }
+                show_bin(bin_num);
+            }
         } else {
             printf("Wrong command!");
         }
