@@ -37,6 +37,11 @@ int main()
                 continue;
             }
             show_bin(bin_num);
+        } else if(!strcmp(input,"p")) {
+            char m[20];
+            scanf("%s",m);
+            if(!strcmp(m,"mmap"))
+                show_mmap();
         } else {
             printf("Wrong command!");
         }

@@ -2,11 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <sys/mman.h>
 
 bool has_init = false;
+bool mmap_init = false;
 void *start_brk = NULL;
 bin_t s_bin[11] = {};
 bin_t *bin[11];
+bin_t s_mhead = {};
+bin_t *mhead;
 int slice_num = 1; // count the number of chunk
 chunk_header *top[2];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -22,11 +26,95 @@ static chunk_header *de_bin(const int index, const size_t need);
 static void rm_chunk_from_bin(chunk_header *c);
 static int check_valid_free(const void *mem);
 
+void reorder(void)
+{
+    chunk_header *tmp;
+    chunk_header *cur;
+    chunk_header *qq;
+
+
+    tmp = mhead->prev;
+    cur = mhead->next;
+    while(cur!=tmp) {
+
+        if(cur->size_and_flag.cur_chunk_size < tmp->size_and_flag.cur_chunk_size) {
+            cur = cur->next;
+            // continue;
+        } else {
+            if(mhead->size==2) {
+                mhead->next = tmp;
+                tmp->prev = mhead;
+                tmp->next = cur;
+                cur->prev = tmp;
+                // break;
+            } else {
+                qq = cur->prev;
+                tmp->prev = cur->prev;
+                qq->next = tmp;
+                tmp->next = cur;
+                cur->next = mhead;
+                // break;
+            }
+            break;
+        }
+    }
+
+}
+void add2list(struct chunk_header* c_h,size_t need)
+{
+    c_h->size_and_flag.mmap_flag=1;
+    c_h->size_and_flag.alloc_flag=1;
+    c_h->size_and_flag.cur_chunk_size = need;
+    c_h->size_and_flag.prev_chunk_size = 0;
+    c_h->prev = NULL;
+    c_h->next = NULL;
+    if (mhead->size == 0) {
+        mhead->next = c_h;
+        c_h->prev = mhead;
+        mhead->prev = c_h;
+        c_h->next = mhead;
+    } else {
+        chunk_header *tmp;
+        chunk_header *cur;
+
+        tmp = mhead->prev;
+        mhead->prev = c_h;
+        c_h->next = mhead;
+        tmp->next = c_h;
+        c_h->prev = tmp;
+
+    }
+    mhead->size++;
+}
 void *hw_malloc(size_t bytes)
 {
     if(bytes+24LL>MMAP_THRESHOLD) {
-        printf("mmap %lld\n",bytes+24LL);
-        return NULL;
+        if(!mmap_init) {
+            mmap_init  = true;
+            mhead = &s_mhead;
+            mhead->prev = mhead;
+            mhead->next = mhead;
+            mhead->size = 0;
+        }
+        // printf("mmap %lld\n",bytes+24LL);
+        size_t need = bytes%1024 != 0 ? (bytes/1024+1)*1024 : bytes;
+        // printf("hey %d\n",need);
+        void* addr = mmap(NULL,need,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,0,0);
+        // printf("hey %d\n",need);
+
+        add2list(addr, need);
+        reorder();
+        chunk_header * tmp = mhead->next;
+        chunk_header * tmp2 = tmp->next;
+        chunk_header * tmp3 = tmp2->next;
+        // printf("yaya %d\n",tmp->size_and_flag.cur_chunk_size);
+        // printf("yaya2 %d\n",tmp2->size_and_flag.cur_chunk_size);
+        // printf("yaya3 %d\n",tmp3->size_and_flag.cur_chunk_size);
+        // add2list(s);
+        // printf("%d\n",addr);
+
+        return (void *)((intptr_t)(void*)addr +
+                        sizeof(chunk_header));
         // mmap()
         // chunk
         // bytes+header_size
@@ -128,7 +216,19 @@ void *get_start_brk(void)
 {
     return (void *)start_brk;
 }
-
+void show_mmap(void)
+{
+    if (!mmap_init) {
+        return;
+    }
+    chunk_header *cur = mhead->next;
+    // printf("???%d\n",cur->size_and_flag.cur_chunk_size);
+    while ((void *)cur != (void *)mhead) {
+        void *r_cur = (void *)((intptr_t)(void*)cur);
+        printf("0x%012" PRIxPTR "--------%d\n", (uintptr_t)r_cur, cur->size_and_flag.cur_chunk_size);
+        cur = cur->next;
+    }
+}
 void show_bin(const int i)
 {
     if (!has_init) {
