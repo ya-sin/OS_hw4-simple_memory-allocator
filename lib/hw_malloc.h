@@ -60,7 +60,7 @@ typedef struct bin_t {
 
 extern void *hw_malloc(size_t bytes);
 extern int hw_free(void *mem);
-extern void *get_start_brk(void);
+extern void *hw_get_start_brk(void);
 extern void show_bin(const int i);
 extern void watch_heap();
 
