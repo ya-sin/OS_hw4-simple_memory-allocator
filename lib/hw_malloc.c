@@ -31,16 +31,49 @@ void chunk_ptr_init(struct chunk_ptr_t* tmp,size_t bytes,unsigned prev_chunk_siz
     printf("new alloc_FLAG %d\n",tmp->size_and_flag->alloc_flag);
 
 }
+struct chunk_ptr_t* get_uchunk_header(struct chunk_ptr_t* add_pos)
+{
+    // assert(add_pos != NULL);
+    struct chunk_ptr_t* re_header = (struct chunk_ptr_t*)((
+                                        void*)add_pos+add_pos->size_and_flag->cur_chunk_size);
+    if((void*)re_header >= (void*)HEAP->start_brk+HEAP_SIZE) {
+        re_header = (void*)re_header-HEAP_SIZE;
+        printf("kkk\n");
+    }
+    return re_header;
+}
+void renew_upper_chunk(struct chunk_ptr_t* entry)
+{
+    struct chunk_ptr_t* upper_chunk = get_uchunk_header(entry);
+    // assert(upper_chunk!=NULL);
+    upper_chunk->size_and_flag->prev_chunk_size = entry->size_and_flag->cur_chunk_size;
+    upper_chunk->size_and_flag->alloc_flag = 0;
+}
+void split(struct chunk_ptr_t* tmp)
+{
+
+}
 void add2bin(struct heap_t* HEAP,struct chunk_ptr_t* tmp)
 {
-    int bin,i=0;
-    bin = (int)tmp->size_and_flag->cur_chunk_size;
-    // bin = bin>>1;
-    // printf("bin num %d %d\n",i,bin);
-    while(bin!=1) {
-        bin = bin>>1;
-        i++;
-        printf("bin num %d %d\n",i,bin);
+    int chunk_size,bin=0;
+    chunk_size = (int)tmp->size_and_flag->cur_chunk_size;
+    while(chunk_size!=1) {
+        chunk_size = chunk_size>>1;
+        bin++;
+        // printf("bin num %d %d\n",i,bin);
+    }
+    if(bin>=16) {
+        split(tmp);
+    } else {
+        renew_upper_chunk(tmp);
+        struct chunk_ptr_t* listptr;
+        struct chunk_ptr_t* bin_head = HEAP->Bin[bin];
+        for(listptr = bin_head->next; ; listptr=listptr->next) {
+            if(tmp->size_and_flag->cur_chunk_size > listptr->size_and_flag->cur_chunk_size) {
+                // __list_add(tmp,listptr->prev,listptr);
+                break;
+            }
+        }
     }
 }
 void heap_init(struct heap_t** HEAP)
@@ -57,7 +90,7 @@ void heap_init(struct heap_t** HEAP)
         bin_init((&(*HEAP)->Bin[i]));
     }
     // from start_brk to start up a new chunk header
-    chunk_ptr_init((struct chunk_ptr_t*)(*HEAP)->start_brk,HEAP_SIZE,1,1,0);
+    chunk_ptr_init((struct chunk_ptr_t*)(*HEAP)->start_brk,HEAP_SIZE,1,0,0);
     // append to bin
     add2bin(*HEAP,(struct chunk_ptr_t*)(*HEAP)->start_brk);
 }

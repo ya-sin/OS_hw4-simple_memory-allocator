@@ -35,7 +35,7 @@ void *hw_malloc(size_t bytes);
 int hw_free(void *mem);
 void *get_start_sbrk(void);
 
-void chunk_ptr_init(struct chunk_ptr_t* tmp,size_t bytes,unsigned prev_chunk_size,unsigned alloc_flag,unsigned mmap_flag);
+void chunk_ptr_init(struct chunk_ptr_t* tmp,size_t bytes,unsigned prev_chunk_size,unsigned alloc_flag,unsigned mmap);
 void chunk_info_init(struct chunk_info_t** info);
 void bin_init(struct chunk_ptr_t** Bin);
 void heap_init();
