@@ -16,20 +16,16 @@ int main()
                 printf("%p\n", ptr);
             }
         } else if(!strcmp(input,"free")) {
-            // void *mem = (void *)(uintptr_t)strtol(get_argv(input), NULL, 16);
+            int tmp;
             scanf("%p",&addr);
-            printf("%s\n", hw_free(addr) == 1 ? "success" : "fail");
-            // printf("%s\n",addr);
-            // printf("in free");
-            // tmp = hw_free(addr);
-            // if(tmp)
-            //     printf("success");
-            // else
-            //     printf("fail");
+            tmp = hw_free(addr);
+            if(tmp)
+                printf("success\n");
+            else
+                printf("fail\n");
         } else if(!strcmp(input,"print")) {
             int bin_num;
             char q[20];
-            // int i = input[10] - '0';
             scanf("%s",q);
             bin_num = q[4]-'0';
             if(q[5]-'0'==0)
@@ -54,23 +50,4 @@ int main()
 
     }
     return 0;
-}
-
-char *get_argv(const char *command)
-{
-    char delim[] = " ";
-    char *s = (char *)strndup(command, 20);
-    char *pos;
-    if ((pos = strchr(s, '\n')) != NULL)
-        * pos = '\0';
-    // split
-    char *token;
-    int argc = 0;
-    for (token = strsep(&s, delim); token != NULL; token = strsep(&s, delim)) {
-        if (argc == 1) {
-            return token;
-        }
-        argc++;
-    }
-    return "";
 }

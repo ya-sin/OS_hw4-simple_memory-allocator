@@ -66,7 +66,6 @@ void add2list(struct chunk_header* c_h,size_t need)
         c_h->next = mhead;
     } else {
         chunk_header *tmp;
-        chunk_header *cur;
 
         tmp = mhead->prev;
         mhead->prev = c_h;
@@ -95,9 +94,6 @@ void *hw_malloc(size_t bytes)
 
         add2list(addr, need);
         reorder();
-        chunk_header * tmp = mhead->next;
-        chunk_header * tmp2 = tmp->next;
-        chunk_header * tmp3 = tmp2->next;
         // printf("yaya %d\n",tmp->size_and_flag.cur_chunk_size);
         // printf("yaya2 %d\n",tmp2->size_and_flag.cur_chunk_size);
         // printf("yaya3 %d\n",tmp3->size_and_flag.cur_chunk_size);
@@ -154,7 +150,6 @@ void *hw_malloc(size_t bytes)
 
             chunk_header *s = create_chunk(get_start_brk(), HEAP_SIZE);
             chunk_header *c = split(&s, need);
-            chunk_header test;
             // printf("!!!!chunk size%d %d %d %d\n",sizeof(test.prev),sizeof(test.next),sizeof(test.size_and_flag),sizeof(test));
             // pthread_mutex_unlock(&mutex);
             return (void *)((intptr_t)(void*)c +
@@ -235,7 +230,7 @@ void show_bin(const int i)
     }
 }
 
-static chunk_header *create_chunk(chunk_header *base, const size_t need)
+chunk_header *create_chunk(chunk_header *base, const size_t need)
 {
     if ((void *)base - get_start_brk() + need > 64 * 1024) {
         PRINTERR("heap not enough\n");
@@ -251,7 +246,7 @@ static chunk_header *create_chunk(chunk_header *base, const size_t need)
     return ret;
 }
 
-static chunk_header *split(chunk_header **ori, const size_t need)
+chunk_header *split(chunk_header **ori, const size_t need)
 {
     // printf("chunk_size %d %lld\n",(*ori)->size_and_flag.cur_chunk_size,(*ori)->size_and_flag.cur_chunk_size);
     if ((*ori)->size_and_flag.cur_chunk_size/2 >= need ) {
@@ -292,7 +287,7 @@ static chunk_header *split(chunk_header **ori, const size_t need)
     }
 }
 
-static chunk_header *merge(chunk_header *h)
+chunk_header *merge(chunk_header *h)
 {
     chunk_header *nxt = (chunk_header *)((intptr_t)(void*)h +
                                          (intptr_t)(void*)((chunk_header *)h)->size_and_flag.cur_chunk_size);
@@ -326,7 +321,7 @@ static chunk_header *merge(chunk_header *h)
     }
 }
 
-static int search_debin(const size_t need)
+int search_debin(const size_t need)
 {
     for (int i = 0; i < 11; i++) {
         if (bin[i]->size == 0) {
@@ -340,7 +335,7 @@ static int search_debin(const size_t need)
     return -1;
 }
 
-static int search_enbin(const size_t size)
+int search_enbin(const size_t size)
 {
     int chunk_size=size,bin=0;
     while(chunk_size!=1) {
@@ -352,7 +347,7 @@ static int search_enbin(const size_t size)
     return bin-5;
 }
 
-static void en_bin(const int index, chunk_header *c_h)
+void en_bin(const int index, chunk_header *c_h)
 {
     if (bin[index]->size == 0) {
         bin[index]->next = c_h;
@@ -361,7 +356,6 @@ static void en_bin(const int index, chunk_header *c_h)
         c_h->next = bin[index];
     } else {
         chunk_header *tmp;
-        chunk_header *cur;
 
         tmp = bin[index]->prev;
         bin[index]->prev = c_h;
@@ -372,7 +366,7 @@ static void en_bin(const int index, chunk_header *c_h)
     bin[index]->size++;
 }
 
-static chunk_header *de_bin(const int index, const size_t need)
+chunk_header *de_bin(const int index, const size_t need)
 {
     if (bin[index]->size == 0) {
         PRINTERR("size = 0\n");
@@ -405,7 +399,7 @@ static chunk_header *de_bin(const int index, const size_t need)
     }
 }
 
-static void rm_chunk_from_bin(chunk_header *c)
+void rm_chunk_from_bin(chunk_header *c)
 {
     /*Used to reconnect linked list when removing a chunk*/
     if (c->prev == bin[0] || c->prev == bin[1] ||
@@ -434,7 +428,7 @@ static void rm_chunk_from_bin(chunk_header *c)
     c->next = NULL;
 }
 
-static int check_valid_free(const void *a_mem)
+int check_valid_free(const void *a_mem)
 {
     chunk_header *cur = get_start_brk();
     int count = 0;
