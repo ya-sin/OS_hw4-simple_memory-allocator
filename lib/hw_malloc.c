@@ -107,6 +107,7 @@ int hw_free(void *mem)
     pthread_mutex_lock(&mutex);
     void *a_mem = (void *)((intptr_t)(void*)mem +
                            (intptr_t)(void*)get_start_brk());
+    // printf("a_mem %d %d %d\n",a_mem,get_start_brk(),mem);
     if (!has_init || !check_valid_free(a_mem)) {
         pthread_mutex_unlock(&mutex);
         return 0;
@@ -387,10 +388,10 @@ static int check_valid_free(const void *a_mem)
     chunk_header *cur = get_start_brk();
     int count = 0;
     while (count++ < slice_num + 1) {
-        if ((intptr_t)(void*)cur > (intptr_t)(void*)a_mem - 40) {
+        if ((intptr_t)(void*)cur > (intptr_t)(void*)a_mem - 24) {
             return 0;
         }
-        if (cur == a_mem - 40) {
+        if (cur == a_mem - 24) {
             void *nxt;
             nxt = (void *)((intptr_t)(void*)cur +
                            (intptr_t)(void*)cur->size_and_flag.cur_chunk_size);
