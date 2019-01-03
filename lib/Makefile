@@ -1,11 +1,11 @@
 TARGETS = hw_malloc.o
 CC ?= gcc
-CFLAGS += -std=gnu99 -Wall -g
+CFLAGS += -std=gnu99 -Wall -pthread
 OBJS = $(TARGETS)
 
 all: $(TARGETS)
 
-$(OBJS): %.o: %.c
+$(OBJS): %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
