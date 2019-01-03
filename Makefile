@@ -4,8 +4,13 @@ CC ?= gcc
 CFLAGS += -std=gnu99 -I./lib -Wall -pthread
 OBJS = hw4_mm_test.o ./lib/hw_malloc.o
 SUBDIR = ./lib
+GIT_HOOKS := .git/hooks/applied
 
-all: $(TARGETS)
+all: $(GIT_HOOKS) $(TARGETS)
+
+$(GIT_HOOKS):
+	@.githooks/install-git-hooks
+	@echo
 
 $(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) -lm
